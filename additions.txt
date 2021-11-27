@@ -1,0 +1,159 @@
+diff --git a/Makefile b/Makefile
+index 09d790c..be5602c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -51,7 +51,7 @@ TOOLPREFIX := $(shell if i386-jos-elf-objdump -i 2>&1 | grep '^elf32-i386$$' >/d
+ endif
+ 
+ # If the makefile can't find QEMU, specify its path here
+-# QEMU = qemu-system-i386
++QEMU = qemu-system-x86_64
+ 
+ # Try to infer the correct QEMU
+ ifndef QEMU
+@@ -181,6 +181,8 @@ UPROGS=\
+ 	_usertests\
+ 	_wc\
+ 	_zombie\
++	_test1\
++	_test2\
+ 
+ fs.img: mkfs README $(UPROGS)
+ 	./mkfs fs.img README $(UPROGS)
+@@ -249,7 +251,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
+ 
+ EXTRA=\
+ 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
+-	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
++	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\ test1.c\ test2.c\
+ 	printf.c umalloc.c\
+ 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
+ 	.gdbinit.tmpl gdbutil\
+diff --git a/defs.h b/defs.h
+index 82fb982..9559fa3 100644
+--- a/defs.h
++++ b/defs.h
+@@ -164,6 +164,7 @@ void            idtinit(void);
+ extern uint     ticks;
+ void            tvinit(void);
+ extern struct spinlock tickslock;
++int		 trapcount;
+ 
+ // uart.c
+ void            uartinit(void);
+diff --git a/main.c b/main.c
+index 9924e64..d77405f 100644
+--- a/main.c
++++ b/main.c
+@@ -35,6 +35,7 @@ main(void)
+   kinit2(P2V(4*1024*1024), P2V(PHYSTOP)); // must come after startothers()
+   userinit();      // first user process
+   mpmain();        // finish this processor's setup
++  trapcount = 0;
+ }
+ 
+ // Other CPUs jump here from entryother.S.
+diff --git a/syscall.c b/syscall.c
+index ee85261..a395463 100644
+--- a/syscall.c
++++ b/syscall.c
+@@ -103,6 +103,7 @@ extern int sys_unlink(void);
+ extern int sys_wait(void);
+ extern int sys_write(void);
+ extern int sys_uptime(void);
++extern int sys_countTraps(void);
+ 
+ static int (*syscalls[])(void) = {
+ [SYS_fork]    sys_fork,
+@@ -126,6 +127,7 @@ static int (*syscalls[])(void) = {
+ [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
++[SYS_countTraps]	sys_countTraps,
+ };
+ 
+ void
+diff --git a/syscall.h b/syscall.h
+index bc5f356..3f4d02e 100644
+--- a/syscall.h
++++ b/syscall.h
+@@ -20,3 +20,4 @@
+ #define SYS_link   19
+ #define SYS_mkdir  20
+ #define SYS_close  21
++#define SYS_countTraps 22
+diff --git a/sysfile.c b/sysfile.c
+index bfe61b7..76f0954 100644
+--- a/sysfile.c
++++ b/sysfile.c
+@@ -95,9 +95,10 @@ sys_close(void)
+ {
+   int fd;
+   struct file *f;
+-
+-  if(argfd(0, &fd, &f) < 0)
++  
++  if(argfd(0, &fd, &f) < 0) {
+     return -1;
++  }
+   myproc()->ofile[fd] = 0;
+   fileclose(f);
+   return 0;
+diff --git a/sysproc.c b/sysproc.c
+index 0686d29..c33b9db 100644
+--- a/sysproc.c
++++ b/sysproc.c
+@@ -89,3 +89,12 @@ sys_uptime(void)
+   release(&tickslock);
+   return xticks;
+ }
++
++// new system call: return number of times user has
++// been trapped to the OS
++int
++sys_countTraps(void)
++{
++  cprintf("Traps occurred since startup: %d\n",trapcount);
++  return 0;
++}
+diff --git a/trap.c b/trap.c
+index 41c66eb..0bc5a65 100644
+--- a/trap.c
++++ b/trap.c
+@@ -37,6 +37,7 @@ void
+ trap(struct trapframe *tf)
+ {
+   if(tf->trapno == T_SYSCALL){
++    trapcount++;
+     if(myproc()->killed)
+       exit();
+     myproc()->tf = tf;
+@@ -80,6 +81,7 @@ trap(struct trapframe *tf)
+ 
+   //PAGEBREAK: 13
+   default:
++    cprintf("trapno: %d\n", tf->trapno);
+     if(myproc() == 0 || (tf->cs&3) == 0){
+       // In kernel, it must be our mistake.
+       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
+diff --git a/user.h b/user.h
+index 4f99c52..6d375b6 100644
+--- a/user.h
++++ b/user.h
+@@ -23,6 +23,7 @@ int getpid(void);
+ char* sbrk(int);
+ int sleep(int);
+ int uptime(void);
++int countTraps(void);
+ 
+ // ulib.c
+ int stat(const char*, struct stat*);
+diff --git a/usys.S b/usys.S
+index 8bfd8a1..393c1ed 100644
+--- a/usys.S
++++ b/usys.S
+@@ -29,3 +29,4 @@ SYSCALL(getpid)
+ SYSCALL(sbrk)
+ SYSCALL(sleep)
+ SYSCALL(uptime)
++SYSCALL(countTraps)
