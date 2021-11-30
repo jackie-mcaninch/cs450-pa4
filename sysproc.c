@@ -89,28 +89,3 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
-
-// return number of times user has
-// been trapped to the OS
-int
-sys_countTraps(void)
-{
-  cprintf("Traps occurred since startup: %d\n",trapcount);
-  return 0;
-}
-
-// new system call: returns virtual address to a shared 
-// page upon creation
-int
-sys_getSharedPage(void)
-{
-  //IMPLEMENT HERE
-  return 0;
-}
-
-//new system call: frees the shared page, returns no value
-sys_freeSharedPage(void)
-{
-	//IMPLEMENT HERE
-	return 0;
-}

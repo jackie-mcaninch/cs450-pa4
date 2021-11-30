@@ -103,9 +103,7 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-extern int sys_countTraps(void);
-extern int sys_getSharedPage(void);
-extern int sys_freeSharedPage(void);
+extern int sys_walkDir(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -129,9 +127,7 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_countTraps]	sys_countTraps,
-[SYS_getSharedPage]	sys_getSharedPage,
-[SYS_freeSharedPage]	sys_freeSharedPage,
+[SYS_walkDir] sys_walkDir,
 };
 
 void

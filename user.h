@@ -23,9 +23,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int countTraps(void);
-int getSharedPage(void);
-int freeSharedPage(void);
+int walkDir(const char*);
 
 // ulib.c
 int stat(const char*, struct stat*);

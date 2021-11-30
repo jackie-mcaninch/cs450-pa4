@@ -443,3 +443,15 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
+
+//NEW SYSCALL FOR CALLING WALK DIRECTORY FROM USER FILE
+int
+sys_walkDir(void)
+{
+	char *path;
+	if(argstr(0, &path)<0) {
+		return -1;
+	}
+	directoryWalker(path);
+	return 0;
+}

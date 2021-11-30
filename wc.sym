@@ -31,6 +31,7 @@
 0000044b fstat
 00000423 kill
 00000463 chdir
+00000493 walkDir
 0000042b exec
 000003fb wait
 0000040b read
@@ -56,5 +57,4 @@
 00000270 strchr
 0000045b mkdir
 0000041b close
-00000493 countTraps
 00000720 free

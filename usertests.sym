@@ -53,6 +53,7 @@
 00003200 validatetest
 00002880 rmdot
 000039f3 chdir
+00003a23 walkDir
 00000a10 exectest
 000039bb exec
 0000398b wait
@@ -100,5 +101,4 @@
 00001070 fourfiles
 000039eb mkdir
 000039ab close
-00003a23 countTraps
 00003cb0 free

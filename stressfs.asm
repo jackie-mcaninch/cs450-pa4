@@ -685,8 +685,8 @@ SYSCALL(uptime)
  440:	cd 40                	int    $0x40
  442:	c3                   	ret    
 
-00000443 <countTraps>:
-SYSCALL(countTraps)
+00000443 <walkDir>:
+SYSCALL(walkDir)
  443:	b8 16 00 00 00       	mov    $0x16,%eax
  448:	cd 40                	int    $0x40
  44a:	c3                   	ret    
