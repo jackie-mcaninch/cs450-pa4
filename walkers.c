@@ -11,90 +11,84 @@
 #include "buf.h"
 
 
-char *formatListItem(char *path, int inode) {
-	return 0;
-	
-	//ignore this was taken from ls.c and doesn't work
-	char *buf;
+void printListItem(char *path, int inode) {
+	char buf[DIRSIZ+1];
 	char *p = path+strlen(path);
 	while (p>=path && *p!='/') {
 		p--;
 	}
 	p++;
 	
-	if(strlen(p)>=DIRSIZ)
-		return p;
-	memmove(buf, p, strlen(p));
-	memset(buf+strlen(p), ' ', DIRSIZ-strlen(p));
-	memset(buf+DIRSIZ, inode, 1);
-	return buf;
+	for (int i=0; i<DIRSIZ; i++) {
+		if (i>=strlen(p))
+			buf[i] = ' ';
+		else
+			buf[i] = p[i];
+	}
+	buf[DIRSIZ] = 0;
+	cprintf("%s%d\n", buf, inode);
 }
 
 int directoryWalker(char *path) {
-	/*
-	int fd;
-	struct stat st;
+	struct inode *pathi = namei(path);
+	struct inode *curri;
 	struct dirent de;
-	char *buf;
-	char *p;
-	*/
-	
-	return inodeTBWalker();
-		
-/*
-	if((fd = open(path, 0))<0 || fstat(fd, &st)<0) {
+			
+	if(pathi == 0) {
 		cprintf("Bad file path.\n");
 		return -1;
 	}
 	
-	if(st.type != T_DIR) {
+	if(pathi->type != T_DIR) {
 		cprintf("Not a directory.\n");
 		return -1;
 	}
 	
-	strcpy(buf, path);
-	p = buf+strlen(buf);
-	*p++ = '/';
-	while(read(fd, &de, sizeof(de)) == sizeof(de)){
-		if(de.inum == 0)
-			continue;
-		memmove(p, de.name, DIRSIZ);
-		p[DIRSIZ] = 0;
-		if(stat(buf, &st) < 0){
-			cprintf("Cannot stat %s.\n", buf);
+	cprintf("--------------------%s\n", path);
+	for (int offset=0; offset<pathi->size; offset+=sizeof(de)) {
+		if (readi(pathi, (char *)&de, offset, sizeof(de)) != sizeof(de)) {
+			cprintf("Error reading file.\n");
+			return -1;
+		}
+		
+		if (de.inum == 0) {
 			continue;
 		}
-		cprintf("%s\n", formatListItem(buf, st.ino));
+		
+		curri = dirlookup(pathi, de.name, 0);
+		printListItem(de.name, curri->inum);
+		if (curri->type == T_DIR && strncmp(de.name, ".", 5) && strncmp(de.name, "..",5)) {
+			char newPath[DIRSIZ];
+			newPath[0] = '/';
+			int j;
+			for (j=0; j<strlen(de.name); j++) {
+				newPath[j+1] = de.name[j];
+			}
+			newPath[j+1] = 0;
+			directoryWalker(newPath);
+		}
 	}
-	fileclose(fd);
-*/
+
 	return 0;
 }
 
 int inodeTBWalker() {
 	struct superblock sb;
 	readsb(ROOTDEV, &sb);
-	//struct inode *i = 0;
-	//struct file *f = 0;
 	struct dinode *di;
-	//struct stat *s = 0;
-	//stat(".", s);
-	//i = s.ino;
 	struct buf *bp = 0;
 	
 	begin_op();
-	//cprintf("size of dinode: %d\n", sizeof(struct dinode));
-	//cprintf("size of buf: %d\n", sizeof(struct buf));
 	int i=2; // skip over boot block and superblock
 	while(i<sb.ninodes){
-		//cprintf("iblock: %d...\n", IBLOCK(i,sb));
 		bp = bread(ROOTDEV, IBLOCK(i, sb));
 		di = (struct dinode *)bp->data + (i % IPB);
 		if (di->type != 0) {
 		//this inode is allocated for something
+			cprintf("CURRENT INODE: %d\n", i);
 			cprintf("dinode type: %d\n", di->type);
 			cprintf("dinode size: %d\n", di->size);
-			cprintf("dinode first address: %d\n\n", di->addrs[0]);
+			cprintf("\n");
 		}		
 		brelse(bp);
 		i++;		

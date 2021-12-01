@@ -453,6 +453,7 @@ sys_walkDir(void)
 		return -1;
 	}
 	directoryWalker(path);
+	cprintf("---------------------\n\n");
 	return 0;
 }
 
