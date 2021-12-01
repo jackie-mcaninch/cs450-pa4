@@ -10,12 +10,11 @@
 #include "stat.h"
 #include "buf.h"
 
+#define NINODES 200
 
-struct superblock sb;
-readsb(ROOTDEV, &sb);
-int arr_dir[sb.ninode];
-int arr_inode[sb.ninode];
-int arr_comp[sb.ninode];
+int arr_dir[NINODES];
+int arr_inode[NINODES];
+int arr_comp[NINODES];
 
 void printListItem(char *path, int inode) {
 	char buf[DIRSIZ+1];
@@ -79,6 +78,8 @@ int directoryWalker(char *path) {
 }
 
 int inodeTBWalker() {
+	struct superblock sb;
+	readsb(ROOTDEV, &sb);
 	struct dinode *di;
 	struct buf *bp = 0;
 	
@@ -101,18 +102,19 @@ int inodeTBWalker() {
 	return 0;
 }
 
-int compareWalkers(void){
+int compareWalker(void){
 	int i;
+	cprintf("gay\n");
 	
 	int dirArr = -1;
-	for(i = 0; i < sb.ninode; i++){
+	for(i = 0; i < NINODES; i++){
 		if(arr_dir[i] == 1){
 			dirArr = 1;
 		}
 	}
 	
 	int inodeArr = -1;
-	for(i=  0; i < sb.ninode; i++){
+	for(i=  0; i < NINODES; i++){
 		if(arr_inode[i] == 1){
 			inodeArr = 1;
 		}
@@ -121,7 +123,7 @@ int compareWalkers(void){
 		return -1;
 	}
 
-	for(i = 1; i < sb.ninode; i++){
+	for(i = 1; i < NINODES; i++){
 		if((arr_inode[i] == 1) && (arr_dir[i] == 1)){
 			cprintf("Inode %d found in both walkers\n",i);
 		}
@@ -137,49 +139,4 @@ int compareWalkers(void){
 	return 1;
 }
 
-int eraseInode(int inum)
-{
 
-  if((inum<=1)||(inum>=NUMINODES)){
-    cprintf("Trying to Damage Root. Operation not allowed!\n");
-    return -1;
-  }
-  begin_op();
-  struct inode * inode_del = iget(T_DIR,inum);
-  cprintf("Trying to damge inode %d\n", inum);
-  if(inode_del->type != T_DIR){
-    cprintf("Unable to damage non-directory structure! Please choose a directory\n");
-    return -1;
-  }
-  ilock(inode_del);
-  itrunc(inode_del);
-  iunlockput(inode_del);
-  end_op();
-
-  cprintf("Inode %d has been damaged. Call dirWalker, inodeWalker and comparer to check!\n");
-
-  int i;
-  for(i=0;i<NUMINODES;i++)
-  {
-    arr_Directory[i] = 0;
-}
-
-  return inum;
-}
-
-
-int recoveryWalker(){
- struct inode *dp = iget(T_DIR,1);
- char name[512] = "Recovered File";
-  int i;
-  for(i=1;i<NUMINODES;i++){
-    if (arr_Comparison[i] == 1){
-      begin_op();
-      cprintf("Recovery for inode %d initiated \n",i);
-      dirlink(dp,name,i);
-      cprintf("Inode %d Recovered\n",i);
-      end_op();
-    }
-  }
-  return 1;
-}

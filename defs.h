@@ -191,6 +191,7 @@ void            clearpteu(pde_t *pgdir, char *uva);
 void 		printListItem(char *path, int inode);
 int 		directoryWalker(char *path);
 int 		inodeTBWalker();
+int		compareWalker();
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

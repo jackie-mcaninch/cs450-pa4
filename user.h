@@ -25,6 +25,7 @@ int sleep(int);
 int uptime(void);
 int walkDir(const char*);
 int walkInodes(void);
+int compareWalkers(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

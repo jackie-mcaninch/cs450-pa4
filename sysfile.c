@@ -464,3 +464,10 @@ sys_walkInodes(void)
 	inodeTBWalker();
 	return 0;
 }
+
+int
+sys_compareWalkers(void)
+{
+	compareWalker();
+	return 0;
+}

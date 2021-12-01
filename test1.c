@@ -27,5 +27,7 @@ int main(int argc, char *argv[]) {
 	for (int i=0; i<num_tests; i++) {
 		close(fd[i]);
 	}
+	
+	compareWalkers();
 	exit();
 }
