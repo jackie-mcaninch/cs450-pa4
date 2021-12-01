@@ -455,3 +455,11 @@ sys_walkDir(void)
 	directoryWalker(path);
 	return 0;
 }
+
+//NEW SYSCALL FOR CALLING INODE TB WALKER FROM USER FILE
+int
+sys_walkInodes(void)
+{
+	inodeTBWalker();
+	return 0;
+}

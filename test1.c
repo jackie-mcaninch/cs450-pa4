@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 	chdir("testfolder");
 	for (int i=0; i<num_tests; i++){
 		memset(temp_name+4, i+48, 1);
-		printf(1, "%s\n", temp_name);
+		//printf(1, "%s\n", temp_name);
 		if((fd[i] = open(temp_name, O_CREATE|O_RDWR))<0){
 			printf(2, "ERROR OPENING FILE!");
 		}
@@ -22,7 +22,8 @@ int main(int argc, char *argv[]) {
 		}
 		
 	}
-	walkDir("testfolder");
+	//walkDir("testfolder");
+	walkInodes();
 	for (int i=0; i<num_tests; i++) {
 		close(fd[i]);
 	}
