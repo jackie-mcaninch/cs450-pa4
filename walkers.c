@@ -15,6 +15,7 @@ struct superblock sb;
 readsb(ROOTDEV, &sb);
 int arr_dir[sb.ninode];
 int arr_inode[sb.ninode];
+int arr_comp[sb.ninode];
 
 void printListItem(char *path, int inode) {
 	char buf[DIRSIZ+1];
@@ -98,6 +99,42 @@ int inodeTBWalker() {
 	}
 	end_op();
 	return 0;
+}
+
+int compareWalkers(void){
+	int i;
+	
+	int dirArr = -1;
+	for(i = 0; i < sb.ninode; i++){
+		if(arr_dir[i] == 1){
+			dirArr = 1;
+		}
+	}
+	
+	int inodeArr = -1;
+	for(i=  0; i < sb.ninode; i++){
+		if(arr_inode[i] == 1){
+			inodeArr = 1;
+		}
+	}
+	if((dirArr == -1) || (inodeArr == -1)){
+		return -1;
+	}
+
+	for(i = 1; i < sb.ninode; i++){
+		if((arr_inode[i] == 1) && (arr_dir[i] == 1)){
+			cprintf("Inode %d found in both walkers\n",i);
+		}
+    if((arr_inode[i] == 0) && (arr_dir[i] == 1)){
+      cprintf("Error! Inode %d found in Directory Walker but not in Inode Walker\n",i);
+    }
+    if((arr_inode[i] == 1) && (arr_dir[i] == 0)){
+			cprintf("Error! Inode %d found in Inode Walker but not in Directory Walker\n",i);
+		}
+    arr_comp[i] = arr_inode[i]^arr_dir[i];
+	}
+
+	return 1;
 }
 
 int eraseInode(int inum)
