@@ -11,6 +11,11 @@
 #include "buf.h"
 
 
+struct superblock sb;
+readsb(ROOTDEV, &sb);
+int arr_dir[sb.ninode];
+int arr_inode[sb.ninode];
+
 void printListItem(char *path, int inode) {
 	char buf[DIRSIZ+1];
 	char *p = path+strlen(path);
@@ -73,8 +78,6 @@ int directoryWalker(char *path) {
 }
 
 int inodeTBWalker() {
-	struct superblock sb;
-	readsb(ROOTDEV, &sb);
 	struct dinode *di;
 	struct buf *bp = 0;
 	
@@ -95,4 +98,51 @@ int inodeTBWalker() {
 	}
 	end_op();
 	return 0;
+}
+
+int eraseInode(int inum)
+{
+
+  if((inum<=1)||(inum>=NUMINODES)){
+    cprintf("Trying to Damage Root. Operation not allowed!\n");
+    return -1;
+  }
+  begin_op();
+  struct inode * inode_del = iget(T_DIR,inum);
+  cprintf("Trying to damge inode %d\n", inum);
+  if(inode_del->type != T_DIR){
+    cprintf("Unable to damage non-directory structure! Please choose a directory\n");
+    return -1;
+  }
+  ilock(inode_del);
+  itrunc(inode_del);
+  iunlockput(inode_del);
+  end_op();
+
+  cprintf("Inode %d has been damaged. Call dirWalker, inodeWalker and comparer to check!\n");
+
+  int i;
+  for(i=0;i<NUMINODES;i++)
+  {
+    arr_Directory[i] = 0;
+}
+
+  return inum;
+}
+
+
+int recoveryWalker(){
+ struct inode *dp = iget(T_DIR,1);
+ char name[512] = "Recovered File";
+  int i;
+  for(i=1;i<NUMINODES;i++){
+    if (arr_Comparison[i] == 1){
+      begin_op();
+      cprintf("Recovery for inode %d initiated \n",i);
+      dirlink(dp,name,i);
+      cprintf("Inode %d Recovered\n",i);
+      end_op();
+    }
+  }
+  return 1;
 }
