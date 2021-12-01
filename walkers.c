@@ -39,6 +39,10 @@ int directoryWalker(char *path) {
 	struct inode *curri;
 	struct dirent de;
 			
+	for (int i=0; i<NINODES; i++) {
+		arr_dir[i] = 0;
+	}
+			
 	if(pathi == 0) {
 		cprintf("Bad file path.\n");
 		return -1;
@@ -62,6 +66,7 @@ int directoryWalker(char *path) {
 		
 		curri = dirlookup(pathi, de.name, 0);
 		printListItem(de.name, curri->inum);
+		arr_inode[curri->inum]++;
 		if (curri->type == T_DIR && strncmp(de.name, ".", 5) && strncmp(de.name, "..",5)) {
 			char newPath[DIRSIZ];
 			newPath[0] = '/';
@@ -83,6 +88,10 @@ int inodeTBWalker() {
 	struct dinode *di;
 	struct buf *bp = 0;
 	
+	for (int i=0; i<NINODES; i++) {
+		arr_inode[i] = 0;
+	}
+	
 	begin_op();
 	int i=2; // skip over boot block and superblock
 	while(i<sb.ninodes){
@@ -94,6 +103,7 @@ int inodeTBWalker() {
 			cprintf("dinode type: %d\n", di->type);
 			cprintf("dinode size: %d\n", di->size);
 			cprintf("\n");
+			arr_inode[i]++;
 		}		
 		brelse(bp);
 		i++;		
@@ -104,7 +114,6 @@ int inodeTBWalker() {
 
 int compareWalker(void){
 	int i;
-	cprintf("gay\n");
 	
 	int dirArr = -1;
 	for(i = 0; i < NINODES; i++){
@@ -127,13 +136,16 @@ int compareWalker(void){
 		if((arr_inode[i] == 1) && (arr_dir[i] == 1)){
 			cprintf("Inode %d found in both walkers\n",i);
 		}
-    if((arr_inode[i] == 0) && (arr_dir[i] == 1)){
-      cprintf("Error! Inode %d found in Directory Walker but not in Inode Walker\n",i);
-    }
-    if((arr_inode[i] == 1) && (arr_dir[i] == 0)){
+		if((arr_inode[i] == 0) && (arr_dir[i] == 1)){
+			cprintf("Error! Inode %d found in Directory Walker but not in Inode Walker\n",i);
+		}
+		if((arr_inode[i] == 1) && (arr_dir[i] == 0)){
 			cprintf("Error! Inode %d found in Inode Walker but not in Directory Walker\n",i);
 		}
-    arr_comp[i] = arr_inode[i]^arr_dir[i];
+		else{
+			cprintf("Both walkers agree: inode at %d\n",i);
+		}
+		arr_comp[i] = arr_inode[i]^arr_dir[i];
 	}
 
 	return 1;
