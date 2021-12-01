@@ -112,7 +112,7 @@ int inodeTBWalker() {
 	return 0;
 }
 
-int compareWalker(void){
+int compareWalker(){
 	int i;
 	
 	int dirArr = -1;
@@ -151,4 +151,6 @@ int compareWalker(void){
 	return 1;
 }
 
-
+int eraseInfo(int inode) {
+	struct inode *target = iget(ROOTDEV, inode);
+}
