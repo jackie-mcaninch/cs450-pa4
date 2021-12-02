@@ -23,3 +23,5 @@
 #define SYS_walkDir 22
 #define SYS_walkInodes 23
 #define SYS_compareWalkers 24
+#define SYS_eraseInfo	25
+#define SYS_fixDamagedFS	26

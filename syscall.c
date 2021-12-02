@@ -106,6 +106,8 @@ extern int sys_uptime(void);
 extern int sys_walkDir(void);
 extern int sys_walkInodes(void);
 extern int sys_compareWalkers(void);
+extern int sys_eraseInfo(void);
+extern int sys_fixDamagedFS(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -130,8 +132,10 @@ static int (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_walkDir] sys_walkDir,
-[SYS_walkInodes] sys_walkInodes,
-[SYS_compareWalkers] sys_compareWalkers,
+[SYS_walkInodes]	sys_walkInodes,
+[SYS_compareWalkers]	sys_compareWalkers,
+[SYS_eraseInfo]	sys_eraseInfo,
+[SYS_fixDamagedFS]	sys_fixDamagedFS,
 };
 
 void

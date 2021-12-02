@@ -66,7 +66,7 @@ int directoryWalker(char *path) {
 		
 		curri = dirlookup(pathi, de.name, 0);
 		printListItem(de.name, curri->inum);
-		arr_inode[curri->inum]++;
+		arr_dir[curri->inum]++;
 		if (curri->type == T_DIR && strncmp(de.name, ".", 5) && strncmp(de.name, "..",5)) {
 			char newPath[DIRSIZ];
 			newPath[0] = '/';
@@ -151,6 +151,22 @@ int compareWalker(){
 	return 1;
 }
 
-int eraseInfo(int inode) {
+int eraseInf(int inode) {
 	struct inode *target = iget(ROOTDEV, inode);
+}
+
+int fixDmgFS(){
+ struct inode *dp = iget(T_DIR,1);
+ char name[512] = "Recovered File";
+  int i;
+  for(i = 1; i < NINODES; i++){
+    if (arr_comp[i] == 1){
+      begin_op();
+      cprintf("Recovery for inode %d initiated \n",i);
+      dirlink(dp,name,i);
+      cprintf("Inode %d Recovered\n",i);
+      end_op();
+    }
+  }
+  return 1;
 }

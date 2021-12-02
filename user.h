@@ -26,6 +26,8 @@ int uptime(void);
 int walkDir(const char*);
 int walkInodes(void);
 int compareWalkers(void);
+int eraseInfo(int);
+int fixDamagedFS(void);
 
 // ulib.c
 int stat(const char*, struct stat*);

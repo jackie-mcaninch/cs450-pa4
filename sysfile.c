@@ -471,3 +471,15 @@ sys_compareWalkers(void)
 	compareWalker();
 	return 0;
 }
+
+int sys_eraseInfo(void)
+{
+	int x;
+	if(argint(0,&x) < 0)	{
+		return -1;
+	}
+	return	eraseInf(x);
+int sys_fixDamagedFS(void)
+{
+	return fixDmgFS();
+}
