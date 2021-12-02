@@ -52,7 +52,7 @@ struct inode*   nameiparent(char*, char*);
 int             readi(struct inode*, char*, uint, uint);
 void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, char*, uint, uint);
-int             eraseInf();
+int             erase();
 int             fix();
 
 // ide.c
@@ -194,6 +194,7 @@ void 		printListItem(char *path, int inode);
 int 		directoryWalker(char *path);
 int 		inodeTBWalker();
 int		compareWalker();
+int		eraseInf(int inode);
 int		fixDmgFS();
 
 // number of elements in fixed-size array

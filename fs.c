@@ -669,7 +669,7 @@ nameiparent(char *path, char *name)
   return namex(path, 1, name);
 }
 
-int eraseInf(int inode) {
+int erase(int inode, int *arr_dir) {
 	if (inode >= sb.ninodes) {
 		cprintf("Only %d inodes can be allocated on xv6.\n", sb.ninodes);
 		return -1;
@@ -690,6 +690,10 @@ int eraseInf(int inode) {
 	itrunc(target);
 	iunlockput(target);
 	end_op();
+	
+	for (int i=0; i<sb.ninodes; i++) {
+		arr_dir[i] = 0;
+	}
 	return 0;
 }
 

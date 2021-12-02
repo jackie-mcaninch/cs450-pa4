@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
 	
 	compareWalkers();
 	eraseInfo(20);
-	compareWalkers();
+	walkDir(argv[1]);
+	walkInodes();
 	fixDamagedFS();
 	exit();
 }

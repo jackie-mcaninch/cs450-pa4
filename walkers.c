@@ -110,6 +110,7 @@ int inodeTBWalker() {
 }
 
 int compareWalker(){
+	cprintf("compare walker\n");
 	int i;
 	int dirArr = -1;
 	for(i = 0; i < NINODES; i++){
@@ -125,6 +126,7 @@ int compareWalker(){
 		}
 	}
 	if((dirArr == -1) || (inodeArr == -1)){
+		cprintf("broken\n");
 		return -1;
 	}
 
@@ -142,6 +144,10 @@ int compareWalker(){
 	}
 
 	return 1;
+}
+
+int eraseInf(int inode) {
+	return erase(inode, arr_dir);
 }
 
 int fixDmgFS() {
