@@ -38,10 +38,7 @@ int directoryWalker(char *path) {
 	struct inode *pathi = namei(path);
 	struct inode *curri;
 	struct dirent de;
-			
-	for (int i=0; i<NINODES; i++) {
-		arr_dir[i] = 0;
-	}
+		
 			
 	if(pathi == 0) {
 		cprintf("Bad file path.\n");
@@ -66,7 +63,7 @@ int directoryWalker(char *path) {
 		
 		curri = dirlookup(pathi, de.name, 0);
 		printListItem(de.name, curri->inum);
-		arr_dir[curri->inum]++;
+		arr_dir[curri->inum] = 1;
 		if (curri->type == T_DIR && strncmp(de.name, ".", 5) && strncmp(de.name, "..",5)) {
 			char newPath[DIRSIZ];
 			newPath[0] = '/';
@@ -103,7 +100,7 @@ int inodeTBWalker() {
 			cprintf("dinode type: %d\n", di->type);
 			cprintf("dinode size: %d\n", di->size);
 			cprintf("\n");
-			arr_inode[i]++;
+			arr_inode[i] = 1;
 		}		
 		brelse(bp);
 		i++;		
@@ -114,7 +111,6 @@ int inodeTBWalker() {
 
 int compareWalker(){
 	int i;
-	
 	int dirArr = -1;
 	for(i = 0; i < NINODES; i++){
 		if(arr_dir[i] == 1){
