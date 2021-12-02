@@ -479,6 +479,8 @@ int sys_eraseInfo(void)
 		return -1;
 	}
 	return	eraseInf(x);
+}
+
 int sys_fixDamagedFS(void)
 {
 	return fixDmgFS();

@@ -668,3 +668,41 @@ nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
 }
+
+int eraseInf(int inode) {
+	if (inode >= sb.ninodes) {
+		cprintf("Only %d inodes can be allocated on xv6.\n", sb.ninodes);
+		return -1;
+	}
+	if (inode < 2) {
+		cprintf("Not a valid inode (0 and 1 are reserved).\n");
+		return -1;
+	}
+	
+	struct inode *target = iget(ROOTDEV, inode);
+	if (target->type != T_DIR) {
+		cprintf("Cannot damage a non-directory inode.\n");
+		return -1;
+	}
+	
+	begin_op();
+	ilock(target);
+	itrunc(target);
+	iunlockput(target);
+	end_op();
+	return 0;
+}
+
+int fix(int *arr_comp){
+	compareWalker();
+	struct inode *curri = iget(ROOTDEV,1);
+	char name[512];
+	for(int i=0; i<sb.ninodes; i++){
+		if (arr_comp[i] == 1){
+			begin_op();
+			dirlink(curri, name, i);
+			end_op();
+		}
+	}
+	return 0;
+}

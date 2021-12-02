@@ -134,16 +134,13 @@ int compareWalker(){
 
 	for(i = 1; i < NINODES; i++){
 		if((arr_inode[i] == 1) && (arr_dir[i] == 1)){
-			cprintf("Inode %d found in both walkers\n",i);
+			cprintf("Inode %d found in both walkers.\n",i);
 		}
 		if((arr_inode[i] == 0) && (arr_dir[i] == 1)){
-			cprintf("Error! Inode %d found in Directory Walker but not in Inode Walker\n",i);
+			cprintf("Inode %d found in Directory Walker but not in Inode Walker\n",i);
 		}
 		if((arr_inode[i] == 1) && (arr_dir[i] == 0)){
-			cprintf("Error! Inode %d found in Inode Walker but not in Directory Walker\n",i);
-		}
-		else{
-			cprintf("Both walkers agree: inode at %d\n",i);
+			cprintf("Inode %d found in Inode Walker but not in Directory Walker\n",i);
 		}
 		arr_comp[i] = arr_inode[i]^arr_dir[i];
 	}
@@ -151,22 +148,6 @@ int compareWalker(){
 	return 1;
 }
 
-int eraseInf(int inode) {
-	struct inode *target = iget(ROOTDEV, inode);
-}
-
-int fixDmgFS(){
- struct inode *dp = iget(T_DIR,1);
- char name[512] = "Recovered File";
-  int i;
-  for(i = 1; i < NINODES; i++){
-    if (arr_comp[i] == 1){
-      begin_op();
-      cprintf("Recovery for inode %d initiated \n",i);
-      dirlink(dp,name,i);
-      cprintf("Inode %d Recovered\n",i);
-      end_op();
-    }
-  }
-  return 1;
+int fixDmgFS() {
+	return fix(arr_comp);
 }

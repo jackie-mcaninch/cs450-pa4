@@ -29,5 +29,8 @@ int main(int argc, char *argv[]) {
 	}
 	
 	compareWalkers();
+	eraseInfo(20);
+	compareWalkers();
+	fixDamagedFS();
 	exit();
 }

@@ -52,6 +52,8 @@ struct inode*   nameiparent(char*, char*);
 int             readi(struct inode*, char*, uint, uint);
 void            stati(struct inode*, struct stat*);
 int             writei(struct inode*, char*, uint, uint);
+int             eraseInf();
+int             fix();
 
 // ide.c
 void            ideinit(void);
@@ -192,8 +194,7 @@ void 		printListItem(char *path, int inode);
 int 		directoryWalker(char *path);
 int 		inodeTBWalker();
 int		compareWalker();
-int		eraseInfo();
-int		fixDamagedFS();
+int		fixDmgFS();
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
