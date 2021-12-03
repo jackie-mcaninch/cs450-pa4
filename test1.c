@@ -4,7 +4,7 @@
 #include "fcntl.h"
 
 int main(int argc, char *argv[]) {
-	int num_tests = 8;
+	int num_tests = 7;
 	int fd[num_tests];
 	char temp_name[10];
 	memmove(temp_name, "testX.txt\0", 10);
@@ -27,11 +27,13 @@ int main(int argc, char *argv[]) {
 	for (int i=0; i<num_tests; i++) {
 		close(fd[i]);
 	}
-	
 	compareWalkers();
 	eraseInfo(20);
 	walkDir(argv[1]);
 	walkInodes();
 	fixDamagedFS();
+	walkDir(argv[1]);
+	walkInodes();
+	compareWalkers();
 	exit();
 }

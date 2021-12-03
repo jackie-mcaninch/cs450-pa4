@@ -698,14 +698,88 @@ int erase(int inode, int *arr_dir) {
 }
 
 int fix(int *arr_comp){
+	struct buf *bp = 0;
+	struct inode *newi = 0;
+	struct inode *dmgdDir = 0;
+	struct dinode *di = 0;
+	struct dirent *de = 0;
+	int numDamaged = 0;
+	int offset = 0;
+	
+	//analyze discrepancies in allocated inode arrays
 	compareWalker();
-	struct inode *curri = iget(ROOTDEV,1);
-	char name[512];
-	for(int i=0; i<sb.ninodes; i++){
-		if (arr_comp[i] == 1){
+	
+	for(int i=2; i<=NINODE; i++) {
+		if (arr_comp[i] == 1) {
+			numDamaged++;
+		}
+		bp = bread(ROOTDEV, IBLOCK(i, sb));
+		di = (struct dinode *)bp->data + (i%IPB);
+		brelse(bp);
+		
+		if (di->type == T_DIR && di->size==0) {
+			dmgdDir = iget(ROOTDEV, i);
+			dmgdDir->dev = ROOTDEV;
+			dmgdDir->inum = i;
+			dmgdDir->type = di->type;
+			dmgdDir->major = di->major;
+			dmgdDir->minor = di->minor;
+			dmgdDir->nlink = di->nlink;
+		}
+	}
+	
+	if (numDamaged > NDIRECT) {
+		cprintf("Too many damaged files to restore.\n");
+		return -1;
+	}
+	for(int i=2; i<=NINODE; i++){
+		if (arr_comp[i]==1) {
+		
+			//load undamaged dinode from disk
+			bp = bread(ROOTDEV, IBLOCK(i, sb));
+			di = (struct dinode *)bp->data + (i%IPB);
+			brelse(bp);
+			
+			//recreate inode from dinode
+			newi = iget(ROOTDEV, i);
+			newi->dev = ROOTDEV;
+			newi->inum = i;
+			newi->type = di->type;
+			newi->major = di->major;
+			newi->minor = di->minor;
+			newi->nlink = di->nlink;
+			newi->size = di->size;
+			for(int j=0; j<=NDIRECT; j++) {
+				newi->addrs[j] = di->addrs[j];
+			}
+			
+			//restore pointers
 			begin_op();
-			dirlink(curri, name, i);
+			dmgdDir->addrs[offset] = newi->inum;
+			iupdate(newi);
+			iupdate(dmgdDir);
 			end_op();
+			
+			//create dots
+			/*
+			begin_op();
+			if(dirlink(dmgdDir, ".", dmgdDir->inum) < 0 || dirlink(iget(ROOTDEV, 1), "..", 1) < 0)
+      				panic("create dots");
+			end_op();*/
+			
+			cprintf("damaged dir size = %d\n", dmgdDir->size);
+			int r;
+			if ((r = readi(dmgdDir, (char *)de, offset*sizeof(de), sizeof(de))) != sizeof(de)) {
+				cprintf("Error reading file.\n");
+			}
+			
+			begin_op();
+			cprintf("name: %s\n", de->name);
+			dirlink(dmgdDir, de->name, i);
+			end_op();
+			
+			offset++;
+			
 		}
 	}
 	return 0;

@@ -10,20 +10,22 @@
 #include "stat.h"
 #include "buf.h"
 
-#define NINODES 200
+#define NINODES 50
 
-int arr_dir[NINODES];
-int arr_inode[NINODES];
-int arr_comp[NINODES];
+int dirs[NINODES];
+int inodes[NINODES];
+int comp[NINODES];
 
 void printListItem(char *path, int inode) {
 	char buf[DIRSIZ+1];
 	char *p = path+strlen(path);
-	while (p>=path && *p!='/') {
+	
+	//move pointer to after last slash
+	while (p>=path && *p!='/')
 		p--;
-	}
 	p++;
 	
+	//copy chars after slash from path to buf
 	for (int i=0; i<DIRSIZ; i++) {
 		if (i>=strlen(p))
 			buf[i] = ' ';
@@ -31,51 +33,65 @@ void printListItem(char *path, int inode) {
 			buf[i] = p[i];
 	}
 	buf[DIRSIZ] = 0;
+	
+	//print file name followed by inode number
 	cprintf("%s%d\n", buf, inode);
 }
+
 
 int directoryWalker(char *path) {
 	struct inode *pathi = namei(path);
 	struct inode *curri;
 	struct dirent de;
 		
-			
+	//check if user-specified path is valid
 	if(pathi == 0) {
 		cprintf("Bad file path.\n");
 		return -1;
 	}
 	
+	//check that user-specified path is a directory
 	if(pathi->type != T_DIR) {
 		cprintf("Not a directory.\n");
 		return -1;
 	}
 	
+	//iterate through list of dirents in directory
 	cprintf("--------------------%s\n", path);
 	for (int offset=0; offset<pathi->size; offset+=sizeof(de)) {
+		
+		//load the dirent into de
 		if (readi(pathi, (char *)&de, offset, sizeof(de)) != sizeof(de)) {
 			cprintf("Error reading file.\n");
 			return -1;
 		}
 		
+		//skip dirent if its inode is not allocated
 		if (de.inum == 0) {
 			continue;
 		}
 		
+		//get inode and print out nicely
 		curri = dirlookup(pathi, de.name, 0);
 		printListItem(de.name, curri->inum);
-		arr_dir[curri->inum] = 1;
-		if (curri->type == T_DIR && strncmp(de.name, ".", 5) && strncmp(de.name, "..",5)) {
+		
+		//save the allocated inode for later comparing
+		dirs[curri->inum] = 1;
+		
+		//recursively handle files in directories
+		if (curri->type==T_DIR && strncmp(de.name,".", 1) && strncmp(de.name,"..",2)) {
+			//generate new path name
 			char newPath[DIRSIZ];
 			newPath[0] = '/';
 			int j;
-			for (j=0; j<strlen(de.name); j++) {
+			for (j=0; j<strlen(de.name) && j<DIRSIZ; j++)
 				newPath[j+1] = de.name[j];
-			}
 			newPath[j+1] = 0;
+			
+			//get inodes for all files inside new directory
 			directoryWalker(newPath);
 		}
 	}
-
 	return 0;
 }
 
@@ -85,71 +101,74 @@ int inodeTBWalker() {
 	struct dinode *di;
 	struct buf *bp = 0;
 	
-	for (int i=0; i<NINODES; i++) {
-		arr_inode[i] = 0;
-	}
+	//initialize allocated inodes array
+	for (int i=0; i<sb.ninodes; i++)
+		inodes[i] = 0;
 	
-	begin_op();
-	int i=2; // skip over boot block and superblock
-	while(i<sb.ninodes){
+	//skipping boot block and superblock, iterate through all available inodes
+	for(int i=2; i<sb.ninodes; i++){
+	
+		//load the dinode from disk
 		bp = bread(ROOTDEV, IBLOCK(i, sb));
 		di = (struct dinode *)bp->data + (i % IPB);
+		
+		//found a non empty inode
 		if (di->type != 0) {
-		//this inode is allocated for something
-			cprintf("CURRENT INODE: %d\n", i);
-			cprintf("dinode type: %d\n", di->type);
-			cprintf("dinode size: %d\n", di->size);
-			cprintf("\n");
-			arr_inode[i] = 1;
+			cprintf("INODE %d  ->  type: %d size: %d\n", i, di->type, di->size);
+			inodes[i] = 1;
 		}		
-		brelse(bp);
-		i++;		
+		brelse(bp);	
 	}
-	end_op();
 	return 0;
 }
 
 int compareWalker(){
-	cprintf("compare walker\n");
 	int i;
 	int dirArr = -1;
-	for(i = 0; i < NINODES; i++){
-		if(arr_dir[i] == 1){
+	int inodeArr = -1;
+	
+	//check if both arrays contain info
+	for(i=0; i<NINODES; i++){
+		if(dirs[i] == 1)
 			dirArr = 1;
-		}
+		if(inodes[i] == 1)
+			inodeArr = 1;
 	}
 	
-	int inodeArr = -1;
-	for(i=  0; i < NINODES; i++){
-		if(arr_inode[i] == 1){
-			inodeArr = 1;
-		}
+	//establish which arrays are missing
+	if(dirArr == -1) {
+		cprintf("Please call walkDir() first.\n");
+		return -1;
 	}
-	if((dirArr == -1) || (inodeArr == -1)){
-		cprintf("broken\n");
+	if(inodeArr == -1){
+		cprintf("Please run walkInodes() first\n");
 		return -1;
 	}
 
-	for(i = 1; i < NINODES; i++){
-		if((arr_inode[i] == 1) && (arr_dir[i] == 1)){
+	//compare the arrays
+	for(i=2; i<NINODES; i++){
+		if((inodes[i] == 1) && (dirs[i] == 1)){
 			cprintf("Inode %d found in both walkers.\n",i);
 		}
-		if((arr_inode[i] == 0) && (arr_dir[i] == 1)){
+		if((inodes[i] == 0) && (dirs[i] == 1)){
 			cprintf("Inode %d found in Directory Walker but not in Inode Walker\n",i);
 		}
-		if((arr_inode[i] == 1) && (arr_dir[i] == 0)){
+		if((inodes[i] == 1) && (dirs[i] == 0)){
 			cprintf("Inode %d found in Inode Walker but not in Directory Walker\n",i);
 		}
-		arr_comp[i] = arr_inode[i]^arr_dir[i];
+		
+		//flag the comp array if they do not agree
+		comp[i] = inodes[i]^dirs[i];
 	}
-
-	return 1;
+	return 0;
 }
 
 int eraseInf(int inode) {
-	return erase(inode, arr_dir);
+	cprintf("\n\nDamaging inode directory: %d...\n\n", inode);
+	return erase(inode, dirs);
 }
 
 int fixDmgFS() {
-	return fix(arr_comp);
+	cprintf("\n\nAttempting to fix inode directory...\n\n");
+	return fix(comp);
 }
