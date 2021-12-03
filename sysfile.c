@@ -448,6 +448,7 @@ sys_pipe(void)
 int
 sys_walkDir(void)
 {
+	cprintf("\n\nWALK DIRECTORY\n\n");
 	char *path;
 	if(argstr(0, &path)<0) {
 		return -1;
@@ -461,6 +462,7 @@ sys_walkDir(void)
 int
 sys_walkInodes(void)
 {
+	cprintf("\n\nWALK INODE TABLE\n\n");
 	inodeTBWalker();
 	return 0;
 }
@@ -468,12 +470,14 @@ sys_walkInodes(void)
 int
 sys_compareWalkers(void)
 {
+	cprintf("\n\nCOMPARE WALKERS\n\n");
 	compareWalker();
 	return 0;
 }
 
 int sys_eraseInfo(void)
 {
+	cprintf("\n\nERASE INFO\n\n");
 	int x;
 	if(argint(0,&x) < 0)	{
 		return -1;
@@ -483,5 +487,6 @@ int sys_eraseInfo(void)
 
 int sys_fixDamagedFS(void)
 {
+	cprintf("\n\nFIX DAMAGED FILE SYSTEM\n\n");
 	return fixDmgFS();
 }

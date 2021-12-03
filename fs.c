@@ -685,6 +685,7 @@ int erase(int inode, int *arr_dir) {
 		return -1;
 	}
 	
+	//lock target and wipe information from memory
 	begin_op();
 	ilock(target);
 	itrunc(target);
@@ -703,20 +704,26 @@ int fix(int *arr_comp){
 	struct inode *dmgdDir = 0;
 	struct dinode *di = 0;
 	struct dirent *de = 0;
-	int numDamaged = 0;
 	int offset = 0;
+	int numDamaged = 0;
 	
 	//analyze discrepancies in allocated inode arrays
 	compareWalker();
 	
+	//walk through to find damaged directory
 	for(int i=2; i<=NINODE; i++) {
+		
+		//count number of damaged inodes
 		if (arr_comp[i] == 1) {
 			numDamaged++;
 		}
+		
+		//load inode block
 		bp = bread(ROOTDEV, IBLOCK(i, sb));
 		di = (struct dinode *)bp->data + (i%IPB);
 		brelse(bp);
 		
+		//find the damaged directory
 		if (di->type == T_DIR && di->size==0) {
 			dmgdDir = iget(ROOTDEV, i);
 			dmgdDir->dev = ROOTDEV;
@@ -728,10 +735,13 @@ int fix(int *arr_comp){
 		}
 	}
 	
+	//make sure workload is managable
 	if (numDamaged > NDIRECT) {
 		cprintf("Too many damaged files to restore.\n");
 		return -1;
 	}
+	
+	//walk through all nodes to find lost inodes
 	for(int i=2; i<=NINODE; i++){
 		if (arr_comp[i]==1) {
 		
@@ -760,26 +770,17 @@ int fix(int *arr_comp){
 			iupdate(dmgdDir);
 			end_op();
 			
-			//create dots
-			/*
-			begin_op();
-			if(dirlink(dmgdDir, ".", dmgdDir->inum) < 0 || dirlink(iget(ROOTDEV, 1), "..", 1) < 0)
-      				panic("create dots");
-			end_op();*/
-			
-			cprintf("damaged dir size = %d\n", dmgdDir->size);
-			int r;
-			if ((r = readi(dmgdDir, (char *)de, offset*sizeof(de), sizeof(de))) != sizeof(de)) {
+			//get name from dirent
+			if ((readi(dmgdDir, (char *)de, offset*sizeof(de), sizeof(de))) != sizeof(de)) {
 				cprintf("Error reading file.\n");
+				//return -1;
 			}
-			
-			begin_op();
-			cprintf("name: %s\n", de->name);
-			dirlink(dmgdDir, de->name, i);
-			end_op();
-			
 			offset++;
-			
+
+			//link dirent structure			
+			begin_op();
+			dirlink(dmgdDir, de->name, i);
+			end_op();	
 		}
 	}
 	return 0;

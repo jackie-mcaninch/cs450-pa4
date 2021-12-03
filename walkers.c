@@ -10,11 +10,10 @@
 #include "stat.h"
 #include "buf.h"
 
-#define NINODES 50
 
-int dirs[NINODES];
-int inodes[NINODES];
-int comp[NINODES];
+int dirs[NINODE];
+int inodes[NINODE];
+int comp[NINODE];
 
 void printListItem(char *path, int inode) {
 	char buf[DIRSIZ+1];
@@ -128,7 +127,7 @@ int compareWalker(){
 	int inodeArr = -1;
 	
 	//check if both arrays contain info
-	for(i=0; i<NINODES; i++){
+	for(i=0; i<NINODE; i++){
 		if(dirs[i] == 1)
 			dirArr = 1;
 		if(inodes[i] == 1)
@@ -146,7 +145,7 @@ int compareWalker(){
 	}
 
 	//compare the arrays
-	for(i=2; i<NINODES; i++){
+	for(i=2; i<NINODE; i++){
 		if((inodes[i] == 1) && (dirs[i] == 1)){
 			cprintf("Inode %d found in both walkers.\n",i);
 		}
@@ -164,7 +163,7 @@ int compareWalker(){
 }
 
 int eraseInf(int inode) {
-	cprintf("\n\nDamaging inode directory: %d...\n\n", inode);
+	cprintf("Damaging inode directory: %d...\n\n", inode);
 	return erase(inode, dirs);
 }
 
