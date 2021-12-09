@@ -166,7 +166,6 @@ void            idtinit(void);
 extern uint     ticks;
 void            tvinit(void);
 extern struct spinlock tickslock;
-int		 trapcount;
 
 // uart.c
 void            uartinit(void);
